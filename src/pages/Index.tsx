@@ -37,9 +37,6 @@ const Index = () => {
               <Shield className="mr-2 h-5 w-5" />
               Access Dashboard
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/setup')}>
-              Demo Setup
-            </Button>
           </div>
         </div>
 
@@ -94,44 +91,6 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* System Status */}
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-center">System Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-center justify-between">
-                <span>Alert System</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-muted-foreground">Operational</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>SMS Gateway</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-muted-foreground">Active</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Database</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-muted-foreground">Online</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Security</span>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-muted-foreground">Protected</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </main>
 
       {/* Footer */}
