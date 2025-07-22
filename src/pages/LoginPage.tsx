@@ -32,10 +32,22 @@ export const LoginPage = () => {
   // Redirect authenticated users
   useEffect(() => {
     if (user && profile && !authLoading) {
-      const targetUrl = returnUrl || (profile.role === 'admin' ? '/admin' : '/employee');
-      navigate(targetUrl, { replace: true });
+      // Check if user has phone number, if not redirect to settings first
+      const hasPhoneNumber = profile.phone_number && profile.phone_number.trim() !== '';
+      
+      if (!hasPhoneNumber && !returnUrl) {
+        navigate('/settings', { replace: true });
+        toast({
+          title: "Complete Your Profile",
+          description: "Please add your phone number to receive emergency alerts.",
+          duration: 5000
+        });
+      } else {
+        const targetUrl = returnUrl || (profile.role === 'admin' ? '/admin' : '/employee');
+        navigate(targetUrl, { replace: true });
+      }
     }
-  }, [user, profile, authLoading, navigate, returnUrl]);
+  }, [user, profile, authLoading, navigate, returnUrl, toast]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
