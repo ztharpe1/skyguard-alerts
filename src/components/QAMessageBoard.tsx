@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { sanitizeInput, validateAlertTitle, validateAlertMessage } from '@/lib/security';
 import { 
   MessageSquare, 
   Plus, 
@@ -186,10 +187,16 @@ const QAMessageBoard = () => {
   const handleCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !newQuestion.title || !newQuestion.question) {
+    if (!user) return;
+
+    // Validate and sanitize inputs
+    const titleValidation = validateAlertTitle(newQuestion.title);
+    const questionValidation = validateAlertMessage(newQuestion.question);
+    
+    if (!titleValidation.isValid || !questionValidation.isValid) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: titleValidation.error || questionValidation.error || "Invalid input",
         variant: "destructive"
       });
       return;
@@ -199,10 +206,13 @@ const QAMessageBoard = () => {
       const { error } = await supabase
         .from('qa_questions')
         .insert([{
-          ...newQuestion,
-          asked_by: user.id,
-          job_site: newQuestion.job_site || null,
-          job_number: newQuestion.job_number || null
+          title: titleValidation.sanitized,
+          question: questionValidation.sanitized,
+          job_site: newQuestion.job_site ? sanitizeInput(newQuestion.job_site) : null,
+          job_number: newQuestion.job_number ? sanitizeInput(newQuestion.job_number) : null,
+          priority: newQuestion.priority,
+          category: newQuestion.category,
+          asked_by: user.id
         }]);
 
       if (error) throw error;
@@ -233,10 +243,15 @@ const QAMessageBoard = () => {
   };
 
   const handleAnswer = async (questionId: string) => {
-    if (!user || !newAnswer.trim()) {
+    if (!user) return;
+
+    // Validate and sanitize answer
+    const answerValidation = validateAlertMessage(newAnswer);
+    
+    if (!answerValidation.isValid) {
       toast({
         title: "Error",
-        description: "Please enter an answer",
+        description: answerValidation.error || "Invalid answer",
         variant: "destructive"
       });
       return;
@@ -249,7 +264,7 @@ const QAMessageBoard = () => {
         .from('qa_answers')
         .insert([{
           question_id: questionId,
-          answer: newAnswer,
+          answer: answerValidation.sanitized,
           answered_by: user.id,
           is_official: isAdmin
         }])
@@ -264,7 +279,7 @@ const QAMessageBoard = () => {
           body: {
             questionId: questionId,
             answerId: answer.id,
-            answerText: newAnswer,
+            answerText: answerValidation.sanitized,
             isOfficial: isAdmin
           }
         });

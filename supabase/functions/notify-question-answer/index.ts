@@ -13,6 +13,28 @@ interface NotifyQuestionAnswerRequest {
   isOfficial: boolean;
 }
 
+// Input validation functions
+function sanitizeInput(input: string): string {
+  return input.replace(/<[^>]*>/g, '').trim();
+}
+
+function validateInput(input: string, maxLength: number = 1000): { isValid: boolean; sanitized: string; error?: string } {
+  if (!input || typeof input !== 'string') {
+    return { isValid: false, sanitized: '', error: 'Input is required' };
+  }
+  
+  if (input.length > maxLength) {
+    return { isValid: false, sanitized: '', error: `Input exceeds maximum length of ${maxLength} characters` };
+  }
+  
+  const sanitized = sanitizeInput(input);
+  if (sanitized.length === 0) {
+    return { isValid: false, sanitized: '', error: 'Input cannot be empty after sanitization' };
+  }
+  
+  return { isValid: true, sanitized };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,7 +47,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { questionId, answerId, answerText, isOfficial }: NotifyQuestionAnswerRequest = await req.json();
+    const requestData: NotifyQuestionAnswerRequest = await req.json();
+    const { questionId, answerId, answerText, isOfficial } = requestData;
+
+    // Validate inputs
+    if (!questionId || !answerId || typeof isOfficial !== 'boolean') {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const answerValidation = validateInput(answerText, 1000);
+    if (!answerValidation.isValid) {
+      return new Response(
+        JSON.stringify({ error: answerValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get the question details and the person who asked it
     const { data: question, error: questionError } = await supabaseClient
@@ -77,7 +116,7 @@ serve(async (req) => {
       ? `\n\nJob Details:\n${question.job_site ? `Site: ${question.job_site}` : ''}${question.job_number ? `\nJob #: ${question.job_number}` : ''}`
       : '';
 
-    const alertMessage = `Your question has been ${isOfficial ? 'officially answered' : 'responded to'}!\n\nOriginal Question:\n"${question.question}"\n\nAnswer by ${answer.answerer?.username || 'Unknown'}:\n"${answerText}"${jobInfo}\n\nCategory: ${question.category}\nPriority: ${question.priority}`;
+    const alertMessage = `Your question has been ${isOfficial ? 'officially answered' : 'responded to'}!\n\nOriginal Question:\n"${question.question}"\n\nAnswer by ${answer.answerer?.username || 'Unknown'}:\n"${answerValidation.sanitized}"${jobInfo}\n\nCategory: ${question.category}\nPriority: ${question.priority}`;
 
     // Create the alert
     const { data: newAlert, error: alertError } = await supabaseClient

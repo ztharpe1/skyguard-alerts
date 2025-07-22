@@ -11,6 +11,7 @@ import { AlertTriangle, Send, Users, Clock, CheckCircle, MessageSquare, History,
 import { alertService, AlertRequest } from '@/services/alertService';
 import { useToast } from '@/hooks/use-toast';
 import { ReadReceiptsDialog } from '@/components/ReadReceiptsDialog';
+import { validateAlertTitle, validateAlertMessage } from '@/lib/security';
 
 interface SentAlert {
   id: string;
@@ -76,10 +77,14 @@ const SendAlerts = () => {
   };
 
   const handleSendAlert = async () => {
-    if (!alertForm.alert_type || !alertForm.title || !alertForm.message || !alertForm.priority) {
+    // Validate and sanitize inputs
+    const titleValidation = validateAlertTitle(alertForm.title);
+    const messageValidation = validateAlertMessage(alertForm.message);
+    
+    if (!alertForm.alert_type || !titleValidation.isValid || !messageValidation.isValid || !alertForm.priority) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
+        title: "Invalid Input",
+        description: titleValidation.error || messageValidation.error || "Please fill in all required fields.",
         variant: "destructive"
       });
       return;
@@ -87,7 +92,12 @@ const SendAlerts = () => {
 
     setIsLoading(true);
     try {
-      const result = await alertService.sendAlert(alertForm as AlertRequest);
+      const sanitizedAlert = {
+        ...alertForm,
+        title: titleValidation.sanitized,
+        message: messageValidation.sanitized
+      };
+      const result = await alertService.sendAlert(sanitizedAlert as AlertRequest);
       
       if (result.success) {
         toast({

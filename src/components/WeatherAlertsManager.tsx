@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeInput, validateAlertTitle, validateAlertMessage } from '@/lib/security';
 import { CloudRain, Thermometer, Wind, Droplets, Plus, Edit, Trash2, Play, Pause } from 'lucide-react';
 
 interface WeatherAlert {
@@ -91,10 +92,14 @@ const WeatherAlertsManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.alert_title || !formData.alert_message || !formData.threshold_value) {
+    // Validate and sanitize inputs
+    const titleValidation = validateAlertTitle(formData.alert_title);
+    const messageValidation = validateAlertMessage(formData.alert_message);
+    
+    if (!titleValidation.isValid || !messageValidation.isValid || !formData.threshold_value) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: titleValidation.error || messageValidation.error || "Please fill in all required fields",
         variant: "destructive"
       });
       return;
@@ -102,9 +107,13 @@ const WeatherAlertsManager = () => {
 
     try {
       const alertData = {
-        ...formData,
+        alert_type: formData.alert_type,
+        condition_operator: formData.condition_operator,
         threshold_value: parseFloat(formData.threshold_value),
-        location_filter: formData.location_filter || null
+        location_filter: formData.location_filter ? sanitizeInput(formData.location_filter) : null,
+        alert_title: titleValidation.sanitized,
+        alert_message: messageValidation.sanitized,
+        is_active: formData.is_active
       };
 
       if (editingAlert) {
