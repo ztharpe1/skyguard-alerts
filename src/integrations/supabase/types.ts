@@ -235,6 +235,90 @@ export type Database = {
         }
         Relationships: []
       }
+      weather_alert_logs: {
+        Row: {
+          affected_users_count: number
+          alert_id: string | null
+          created_at: string
+          id: string
+          weather_alert_id: string | null
+          weather_data: Json
+        }
+        Insert: {
+          affected_users_count?: number
+          alert_id?: string | null
+          created_at?: string
+          id?: string
+          weather_alert_id?: string | null
+          weather_data: Json
+        }
+        Update: {
+          affected_users_count?: number
+          alert_id?: string | null
+          created_at?: string
+          id?: string
+          weather_alert_id?: string | null
+          weather_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weather_alert_logs_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weather_alert_logs_weather_alert_id_fkey"
+            columns: ["weather_alert_id"]
+            isOneToOne: false
+            referencedRelation: "weather_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_alerts: {
+        Row: {
+          alert_message: string
+          alert_title: string
+          alert_type: string
+          condition_operator: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          location_filter: string | null
+          threshold_value: number
+          updated_at: string
+        }
+        Insert: {
+          alert_message: string
+          alert_title: string
+          alert_type: string
+          condition_operator: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          location_filter?: string | null
+          threshold_value: number
+          updated_at?: string
+        }
+        Update: {
+          alert_message?: string
+          alert_title?: string
+          alert_type?: string
+          condition_operator?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          location_filter?: string | null
+          threshold_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

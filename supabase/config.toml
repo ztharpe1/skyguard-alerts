@@ -1,1 +1,4 @@
 project_id = "dnwuzjlmiubwormlfffo"
+
+[functions.weather-monitor]
+verify_jwt = false
