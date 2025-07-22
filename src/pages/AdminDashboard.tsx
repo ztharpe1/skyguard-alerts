@@ -20,12 +20,17 @@ import {
   CheckCircle,
   TrendingUp,
   MessageSquare,
-  UserCheck
+  UserCheck,
+  Settings,
+  Cloud,
+  Building
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
   const { alerts, loading } = useAlerts();
+  const navigate = useNavigate();
   const [alertForm, setAlertForm] = useState({
     alert_type: '',
     title: '',
@@ -195,6 +200,53 @@ export const AdminDashboard = () => {
             );
           })}
         </div>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Settings className="h-5 w-5 text-primary" />
+              <span>Quick Actions</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button 
+                onClick={() => navigate('/system-alerts')}
+                variant="outline" 
+                className="h-auto p-4 justify-start"
+              >
+                <Cloud className="h-6 w-6 mr-3 text-blue-500" />
+                <div className="text-left">
+                  <div className="font-medium">Weather Alerts</div>
+                  <div className="text-sm text-muted-foreground">Send weather updates</div>
+                </div>
+              </Button>
+              <Button 
+                onClick={() => navigate('/system-alerts')}
+                variant="outline" 
+                className="h-auto p-4 justify-start"
+              >
+                <Building className="h-6 w-6 mr-3 text-green-500" />
+                <div className="text-left">
+                  <div className="font-medium">Company Alerts</div>
+                  <div className="text-sm text-muted-foreground">Send company notices</div>
+                </div>
+              </Button>
+              <Button 
+                onClick={() => navigate('/system-alerts')}
+                variant="outline" 
+                className="h-auto p-4 justify-start"
+              >
+                <AlertTriangle className="h-6 w-6 mr-3 text-orange-500" />
+                <div className="text-left">
+                  <div className="font-medium">System Alerts</div>
+                  <div className="text-sm text-muted-foreground">Manage all alert types</div>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Send Alert Form */}
