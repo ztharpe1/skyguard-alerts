@@ -94,6 +94,8 @@ export const AdminDashboard = () => {
 
     setIsLoading(true);
     try {
+      console.log('Sending alert with data:', alertForm);
+      
       const alertData: AlertRequest = {
         alert_type: alertForm.alert_type as AlertRequest['alert_type'],
         title: alertForm.title,
@@ -102,7 +104,9 @@ export const AdminDashboard = () => {
         recipients: alertForm.recipients
       };
 
+      console.log('Alert data prepared:', alertData);
       const result = await alertService.sendAlert(alertData);
+      console.log('Alert send result:', result);
       
       if (result.success) {
         // Log admin action for security monitoring
