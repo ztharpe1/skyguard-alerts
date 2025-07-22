@@ -19,14 +19,27 @@ import skyguardLogo from '@/assets/skyguard-logo.png';
 
 interface LayoutProps {
   children: React.ReactNode;
-  userRole?: 'employee' | 'admin';
-  userName?: string;
 }
 
-export const Layout = ({ children, userRole = 'employee', userName = 'User' }: LayoutProps) => {
+export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, profile, user } = useAuth();
+
+  // Default to loading state if no profile
+  if (!profile || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userRole = profile.role;
+  const userName = profile.username || user.email || 'User';
 
   const navigationItems = [
     { 

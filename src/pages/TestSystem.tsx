@@ -130,7 +130,7 @@ export const TestSystem = () => {
   ];
 
   return (
-    <Layout userRole="admin" userName="System Admin">
+    <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

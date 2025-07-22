@@ -110,7 +110,7 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <Layout userRole="admin" userName="Admin User">
+    <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

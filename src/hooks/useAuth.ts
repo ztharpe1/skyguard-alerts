@@ -1,38 +1,161 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-interface User {
-  username: string;
+interface Profile {
+  id: string;
+  user_id: string;
+  username: string | null;
   role: 'admin' | 'employee';
+  phone_number: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check for existing session
-    const stored = sessionStorage.getItem('skyguard_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch (error) {
-        console.error('Invalid session data');
-        sessionStorage.removeItem('skyguard_user');
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Defer profile fetching to prevent deadlocks
+          setTimeout(async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (error) {
+                console.error('Error fetching profile:', error);
+                return;
+              }
+              
+              setProfile(profileData as Profile);
+            } catch (error) {
+              console.error('Error in profile fetch:', error);
+            }
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = () => {
-    sessionStorage.removeItem('skyguard_user');
-    setUser(null);
-    navigate('/', { replace: true });
+  const signUp = async (email: string, password: string, username: string, role: 'admin' | 'employee' = 'employee') => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            username,
+            role
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Update the profile with the correct username and role
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ username, role })
+          .eq('user_id', data.user.id);
+
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+        }
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      // Clean up auth state
+      const cleanupAuthState = () => {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage || {}).forEach((key) => {
+          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      };
+
+      cleanupAuthState();
+      
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+      
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      // Force page reload for clean state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force reload even if logout fails
+      window.location.href = '/';
+    }
   };
 
   const requireAuth = (allowedRoles?: string[]) => {
-    if (!user) {
+    if (!user || !profile) {
       navigate('/', { 
         state: { from: window.location.pathname },
         replace: true 
@@ -40,7 +163,7 @@ export const useAuth = () => {
       return false;
     }
     
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (allowedRoles && !allowedRoles.includes(profile.role)) {
       navigate('/unauthorized', { replace: true });
       return false;
     }
@@ -50,8 +173,12 @@ export const useAuth = () => {
 
   return {
     user,
+    session,
+    profile,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!profile,
+    signUp,
+    signIn,
     logout,
     requireAuth
   };
