@@ -10,6 +10,7 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { TestSystem } from "./pages/TestSystem";
 import { TestDashboard } from "./pages/TestDashboard";
 import { Settings } from "./pages/Settings";
+import { SystemSetup } from "./pages/SystemSetup";
 import { WebIntegration } from "./pages/WebIntegration";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => (
             } 
           />
           <Route path="/integration" element={<WebIntegration />} />
+          <Route path="/setup" element={<SystemSetup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
