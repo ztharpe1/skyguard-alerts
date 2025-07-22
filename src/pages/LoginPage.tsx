@@ -17,20 +17,84 @@ export const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   // Check for return URL from query params or state
   const returnUrl = location.state?.from || new URLSearchParams(location.search).get('return');
   const showBackButton = !!returnUrl;
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (credentials.password !== confirmPassword) {
+      toast({
+        title: "Registration Failed",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Get existing users
+    const existingUsers = JSON.parse(localStorage.getItem('skyguard_users') || '[]');
+    
+    // Check if username already exists
+    if (existingUsers.find((user: any) => user.username === credentials.username)) {
+      toast({
+        title: "Registration Failed",
+        description: "Username already exists",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    setTimeout(() => {
+      // Create new user
+      const userRole = credentials.username.toLowerCase().includes('admin') ? 'admin' : 'employee';
+      const newUser = { 
+        username: credentials.username, 
+        password: credentials.password,
+        role: userRole 
+      };
+      
+      // Save to localStorage
+      existingUsers.push(newUser);
+      localStorage.setItem('skyguard_users', JSON.stringify(existingUsers));
+      
+      toast({
+        title: "Registration Successful",
+        description: "Account created successfully. You can now sign in.",
+      });
+      
+      setIsRegistering(false);
+      setConfirmPassword('');
+      setIsLoading(false);
+    }, 1000);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication
     setTimeout(() => {
       if (credentials.username && credentials.password) {
-        // Store session info
-        const userRole = credentials.username.toLowerCase().includes('admin') ? 'admin' : 'employee';
+        // Check against registered users first
+        const existingUsers = JSON.parse(localStorage.getItem('skyguard_users') || '[]');
+        const user = existingUsers.find((u: any) => 
+          u.username === credentials.username && u.password === credentials.password
+        );
+        
+        let userRole = 'employee';
+        if (user) {
+          userRole = user.role;
+        } else if (credentials.username.toLowerCase().includes('admin')) {
+          userRole = 'admin';
+        }
+        
         const userData = { username: credentials.username, role: userRole };
         sessionStorage.setItem('skyguard_user', JSON.stringify(userData));
         
@@ -90,7 +154,7 @@ export const LoginPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground">Username</label>
                 <Input
@@ -127,15 +191,42 @@ export const LoginPage = () => {
                   </Button>
                 </div>
               </div>
+
+              {isRegistering && (
+                <div>
+                  <label className="text-sm font-medium text-foreground">Confirm Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              )}
               
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? (isRegistering ? "Creating Account..." : "Signing in...") : (isRegistering ? "Create Account" : "Sign In")}
               </Button>
             </form>
+
+            <div className="mt-4 text-center">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  setConfirmPassword('');
+                  setCredentials({ username: '', password: '' });
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                {isRegistering ? "Already have an account? Sign in" : "Don't have an account? Create one"}
+              </Button>
+            </div>
 
             {/* Demo Credentials */}
             <div className="mt-6 p-4 bg-muted rounded-lg">
