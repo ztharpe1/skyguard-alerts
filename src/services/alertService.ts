@@ -31,7 +31,18 @@ export const alertService = {
   // Send alert to users
   sendAlert: async (alert: AlertRequest): Promise<{ success: boolean; recipients: number; alertId?: string }> => {
     try {
-      // Rate limiting check
+      // Server-side rate limiting check
+      const { data: rateLimitAllowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+        p_operation: 'send_alert',
+        p_max_attempts: 5,
+        p_window_minutes: 1
+      });
+
+      if (rateLimitError || !rateLimitAllowed) {
+        throw new Error('Rate limit exceeded. Please wait before sending another alert.');
+      }
+
+      // Fallback client-side rate limiting
       if (!alertRateLimiter()) {
         throw new Error('Rate limit exceeded. Please wait before sending another alert.');
       }

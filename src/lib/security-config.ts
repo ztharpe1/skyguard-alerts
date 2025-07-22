@@ -20,18 +20,28 @@ export interface AuditLogEntry {
 
 // Security monitoring class
 export class SecurityMonitor {
-  // Log security events (in production, this would go to a secure audit table)
+  // Log security events to server-side audit table
   static async logSecurityEvent(entry: AuditLogEntry): Promise<void> {
     try {
-      // In a production app, you'd want to store these in a dedicated audit_logs table
-      console.warn('Security Event:', {
-        ...entry,
-        timestamp: new Date().toISOString(),
-        session_id: await this.getSessionId()
+      // Log to server-side audit table
+      const { error } = await supabase.rpc('log_security_event', {
+        p_event_type: entry.event_type,
+        p_details: entry.details,
+        p_ip_address: entry.ip_address,
+        p_user_agent: entry.user_agent
       });
+
+      if (error) {
+        console.error('Failed to log security event to server:', error);
+        // Fallback to console logging
+        console.warn('Security Event (fallback):', {
+          ...entry,
+          timestamp: new Date().toISOString(),
+          session_id: await this.getSessionId()
+        });
+      }
       
-      // For now, we'll use browser storage for demonstration
-      // In production, send to secure logging service
+      // Also keep local copy for immediate access (last 50 entries)
       const existingLogs = JSON.parse(localStorage.getItem('security_audit_logs') || '[]');
       existingLogs.push({
         ...entry,
@@ -39,9 +49,9 @@ export class SecurityMonitor {
         id: crypto.randomUUID()
       });
       
-      // Keep only last 100 entries in browser storage
-      if (existingLogs.length > 100) {
-        existingLogs.splice(0, existingLogs.length - 100);
+      // Keep only last 50 entries in browser storage
+      if (existingLogs.length > 50) {
+        existingLogs.splice(0, existingLogs.length - 50);
       }
       
       localStorage.setItem('security_audit_logs', JSON.stringify(existingLogs));

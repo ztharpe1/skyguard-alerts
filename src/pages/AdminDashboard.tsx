@@ -12,6 +12,7 @@ import { useAlerts } from '@/hooks/useAlerts';
 import { alertService, AlertRequest } from '@/services/alertService';
 import { SecurityMonitor } from '@/lib/security-config';
 import { SecurityAuditLog } from '@/components/SecurityAuditLog';
+import { AdminAuditLog } from '@/components/AdminAuditLog';
 import { 
   Users, 
   Send, 
@@ -380,8 +381,11 @@ export const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Security Audit Log */}
-        <SecurityAuditLog />
+        {/* Security Audit Logs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SecurityAuditLog />
+          <AdminAuditLog />
+        </div>
 
         {/* Recent Alerts */}
         <div>

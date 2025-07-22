@@ -95,7 +95,7 @@ export const useAuth = () => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, username: string, role: 'admin' | 'employee' = 'employee') => {
+  const signUp = async (email: string, password: string, username: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -105,28 +105,36 @@ export const useAuth = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            username,
-            role
+            username
+            // Role is now enforced server-side as 'employee'
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        SecurityMonitor.monitorFailedAuth(email, error.message);
+        SecurityMonitor.incrementFailedAttempts(email);
+        return { data: null, error };
+      }
 
-      // Update the profile with the correct username and role
       if (data.user) {
+        SecurityMonitor.clearFailedAttempts(email);
+        // Profile will be created automatically by the trigger with 'employee' role
+        // Update username only (role is enforced server-side)
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ username, role })
+          .update({ username })
           .eq('user_id', data.user.id);
 
         if (profileError) {
-          console.error('Error updating profile:', profileError);
+          console.error('Error updating profile username:', profileError);
         }
       }
 
       return { data, error: null };
     } catch (error: any) {
+      SecurityMonitor.monitorFailedAuth(email, error.message);
+      SecurityMonitor.incrementFailedAttempts(email);
       return { data: null, error };
     }
   };

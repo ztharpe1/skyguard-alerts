@@ -23,7 +23,7 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'employee'>('employee');
+  
   
   // Check for return URL from query params or state
   const returnUrl = location.state?.from || new URLSearchParams(location.search).get('return');
@@ -80,8 +80,7 @@ export const LoginPage = () => {
       const { data, error } = await signUp(
         credentials.email, 
         credentials.password, 
-        credentials.username,
-        selectedRole
+        credentials.username
       );
 
       if (error) {
@@ -278,20 +277,6 @@ export const LoginPage = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground flex items-center space-x-2">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Role</span>
-                    </label>
-                    <select
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value as 'admin' | 'employee')}
-                      className="mt-1 w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                    >
-                      <option value="employee">Employee</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
                 </>
               )}
               
@@ -327,7 +312,7 @@ export const LoginPage = () => {
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>Create an account with any email format</p>
                 <p>Check your email for confirmation (if enabled)</p>
-                <p>Choose 'Admin' role for admin features</p>
+                <p>All new users start as 'Employee' role</p>
               </div>
             </div>
           </CardContent>
