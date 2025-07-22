@@ -24,15 +24,21 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           // Defer profile fetching to prevent deadlocks
           setTimeout(async () => {
+            if (!mounted) return;
+            
             try {
               const { data: profileData, error } = await supabase
                 .from('profiles')
@@ -42,30 +48,51 @@ export const useAuth = () => {
               
               if (error) {
                 console.error('Error fetching profile:', error);
+                if (mounted) {
+                  setProfile(null);
+                  setIsLoading(false);
+                }
                 return;
               }
               
-              setProfile(profileData as Profile);
+              if (mounted) {
+                setProfile(profileData as Profile);
+                setIsLoading(false);
+              }
             } catch (error) {
               console.error('Error in profile fetch:', error);
+              if (mounted) {
+                setProfile(null);
+                setIsLoading(false);
+              }
             }
-          }, 0);
+          }, 100);
         } else {
-          setProfile(null);
+          if (mounted) {
+            setProfile(null);
+            setIsLoading(false);
+          }
         }
-        
-        setIsLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
+      if (!mounted) return;
+      
+      if (!session) {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setIsLoading(false);
+      }
+      // If there's a session, let the auth state change handler deal with it
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, username: string, role: 'admin' | 'employee' = 'employee') => {

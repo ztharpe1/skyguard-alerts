@@ -31,7 +31,10 @@ export const LoginPage = () => {
 
   // Redirect authenticated users
   useEffect(() => {
+    // Only redirect if we have both user and profile, and we're not loading
     if (user && profile && !authLoading) {
+      console.log('Redirecting authenticated user:', { user: user.email, role: profile.role, hasPhone: !!profile.phone_number });
+      
       // Check if user has phone number, if not redirect to settings first
       const hasPhoneNumber = profile.phone_number && profile.phone_number.trim() !== '';
       
