@@ -29,6 +29,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WeatherAlertsManager from '@/components/WeatherAlertsManager';
+import QAMessageBoard from '@/components/QAMessageBoard';
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
@@ -206,8 +207,9 @@ export const AdminDashboard = () => {
 
         {/* Tabs for different sections */}
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="qa-board">Q&A Board</TabsTrigger>
             <TabsTrigger value="weather-alerts">Weather Alerts</TabsTrigger>
             <TabsTrigger value="system-status">System Status</TabsTrigger>
           </TabsList>
@@ -419,6 +421,10 @@ export const AdminDashboard = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="qa-board">
+            <QAMessageBoard />
           </TabsContent>
 
           <TabsContent value="weather-alerts">

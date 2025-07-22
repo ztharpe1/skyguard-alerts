@@ -160,6 +160,95 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_answers: {
+        Row: {
+          answer: string
+          answered_by: string
+          attachments: Json | null
+          created_at: string
+          id: string
+          is_official: boolean
+          question_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          answered_by: string
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          question_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          answered_by?: string
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_official?: boolean
+          question_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "qa_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_questions: {
+        Row: {
+          asked_by: string
+          assigned_to: string | null
+          attachments: Json | null
+          category: string
+          created_at: string
+          id: string
+          job_number: string | null
+          job_site: string | null
+          priority: string
+          question: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asked_by: string
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string
+          created_at?: string
+          id?: string
+          job_number?: string | null
+          job_site?: string | null
+          priority?: string
+          question: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asked_by?: string
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string
+          created_at?: string
+          id?: string
+          job_number?: string | null
+          job_site?: string | null
+          priority?: string
+          question?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           attempt_count: number
