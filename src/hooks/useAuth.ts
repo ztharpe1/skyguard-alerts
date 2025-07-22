@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SecurityMonitor } from '@/lib/security-config';
 
 interface Profile {
   id: string;
@@ -111,8 +112,16 @@ export const useAuth = () => {
       });
 
       if (error) throw error;
+      
+      // Clear failed attempts on successful login
+      SecurityMonitor.clearFailedAttempts(email);
+      
       return { data, error: null };
     } catch (error: any) {
+      // Monitor failed authentication
+      await SecurityMonitor.monitorFailedAuth(email, error.message);
+      SecurityMonitor.incrementFailedAttempts(email);
+      
       return { data: null, error };
     }
   };

@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAlerts } from '@/hooks/useAlerts';
 import { alertService, AlertRequest } from '@/services/alertService';
+import { SecurityMonitor } from '@/lib/security-config';
+import { SecurityAuditLog } from '@/components/SecurityAuditLog';
 import { 
   Users, 
   Send, 
@@ -103,6 +105,14 @@ export const AdminDashboard = () => {
       const result = await alertService.sendAlert(alertData);
       
       if (result.success) {
+        // Log admin action for security monitoring
+        await SecurityMonitor.monitorAdminAction('send_alert', {
+          alert_type: alertData.alert_type,
+          priority: alertData.priority,
+          recipients: alertData.recipients,
+          title: alertData.title
+        });
+        
         toast({
           title: "Alert Sent Successfully",
           description: `Alert sent to ${result.recipients} users.`,
@@ -303,6 +313,9 @@ export const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Security Audit Log */}
+        <SecurityAuditLog />
 
         {/* Recent Alerts */}
         <div>
