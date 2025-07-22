@@ -13,6 +13,9 @@ import { Settings } from "./pages/Settings";
 import { SystemSetup } from "./pages/SystemSetup";
 import { WebIntegration } from "./pages/WebIntegration";
 import SystemAlerts from "./pages/SystemAlerts";
+import MyAlerts from "./pages/MyAlerts";
+import ManageUsers from "./pages/ManageUsers";
+import SendAlerts from "./pages/SendAlerts";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -75,6 +78,30 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SystemAlerts />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/alerts" 
+            element={
+              <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                <MyAlerts />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageUsers />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/send" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SendAlerts />
               </ProtectedRoute>
             } 
           />
