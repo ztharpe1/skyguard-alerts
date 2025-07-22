@@ -114,6 +114,25 @@ export const Settings = () => {
 
     setUpgrading(true);
     try {
+      // First, check how many admins currently exist
+      const { data: adminCount, error: countError } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .eq('role', 'admin');
+
+      if (countError) throw countError;
+
+      // Check if we've reached the limit of 5 admins
+      if (adminCount && adminCount.length >= 5) {
+        toast({
+          title: "Admin Limit Reached",
+          description: "Maximum of 5 administrators allowed. Contact system administrator.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Proceed with the role upgrade
       const { error } = await supabase
         .from('profiles')
         .update({ role: 'admin' })
@@ -123,7 +142,7 @@ export const Settings = () => {
 
       toast({
         title: "Role Updated",
-        description: "You have been upgraded to admin. Please refresh the page.",
+        description: `You have been upgraded to admin. (${(adminCount?.length || 0) + 1}/5 admin slots used)`,
       });
       setVerifyCode('');
       
