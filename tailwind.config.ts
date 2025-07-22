@@ -52,6 +52,21 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				skyguard: {
+					orange: 'hsl(var(--skyguard-orange))',
+					'orange-light': 'hsl(var(--skyguard-orange-light))',
+					'orange-dark': 'hsl(var(--skyguard-orange-dark))',
+					amber: 'hsl(var(--skyguard-amber))',
+					deep: 'hsl(var(--skyguard-deep))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
