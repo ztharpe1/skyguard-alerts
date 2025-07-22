@@ -7,6 +7,8 @@ import { LoginPage } from "./pages/LoginPage";
 import { EmployeeDashboard } from "./pages/EmployeeDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { TestSystem } from "./pages/TestSystem";
+import { WebIntegration } from "./pages/WebIntegration";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,9 +21,31 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/test" element={<TestSystem />} />
+          <Route 
+            path="/employee" 
+            element={
+              <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                <EmployeeDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/test" 
+            element={
+              <ProtectedRoute>
+                <TestSystem />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/integration" element={<WebIntegration />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

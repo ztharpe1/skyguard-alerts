@@ -11,8 +11,10 @@ import {
   LogOut,
   AlertTriangle,
   Cloud,
-  Building2
+  Building2,
+  ExternalLink
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import skyguardLogo from '@/assets/skyguard-logo.png';
 
 interface LayoutProps {
@@ -24,6 +26,7 @@ interface LayoutProps {
 export const Layout = ({ children, userRole = 'employee', userName = 'User' }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navigationItems = [
     { 
@@ -91,6 +94,15 @@ export const Layout = ({ children, userRole = 'employee', userName = 'User' }: L
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open('https://yourcompany.com', '_blank')}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Company Site
+              </Button>
               <div className="text-right">
                 <p className="text-sm font-medium text-foreground">{userName}</p>
                 <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
@@ -103,7 +115,7 @@ export const Layout = ({ children, userRole = 'employee', userName = 'User' }: L
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate('/')}
+                onClick={logout}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="h-4 w-4" />

@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import skyguardLogo from '@/assets/skyguard-logo.png';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [credentials, setCredentials] = useState({
     username: '',
@@ -16,6 +17,10 @@ export const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check for return URL from query params or state
+  const returnUrl = location.state?.from || new URLSearchParams(location.search).get('return');
+  const showBackButton = !!returnUrl;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,20 +29,19 @@ export const LoginPage = () => {
     // Simulate authentication
     setTimeout(() => {
       if (credentials.username && credentials.password) {
-        // Simple role-based routing for demo
-        if (credentials.username.toLowerCase().includes('admin')) {
-          navigate('/admin');
-          toast({
-            title: "Login Successful",
-            description: "Welcome to the Admin Dashboard",
-          });
-        } else {
-          navigate('/employee');
-          toast({
-            title: "Login Successful",
-            description: "Welcome to your Dashboard",
-          });
-        }
+        // Store session info
+        const userRole = credentials.username.toLowerCase().includes('admin') ? 'admin' : 'employee';
+        const userData = { username: credentials.username, role: userRole };
+        sessionStorage.setItem('skyguard_user', JSON.stringify(userData));
+        
+        // Navigate to return URL or default dashboard
+        const targetUrl = returnUrl || (userRole === 'admin' ? '/admin' : '/employee');
+        navigate(targetUrl, { replace: true });
+        
+        toast({
+          title: "Login Successful",
+          description: `Welcome to the ${userRole === 'admin' ? 'Admin' : 'Employee'} Dashboard`,
+        });
       } else {
         toast({
           title: "Login Failed",
@@ -52,6 +56,18 @@ export const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Back Button for Web Integration */}
+        {showBackButton && (
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="mb-4 flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Company Site</span>
+          </Button>
+        )}
+        
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
