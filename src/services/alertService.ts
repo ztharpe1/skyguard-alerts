@@ -47,6 +47,12 @@ export const alertService = {
         throw new Error(messageValidation.error);
       }
 
+      // Get current user for sent_by field
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Authentication required to send alerts');
+      }
+
       // Create the alert record with sanitized data
       const { data: alertData, error: alertError } = await supabase
         .from('alerts')
@@ -57,12 +63,16 @@ export const alertService = {
           priority: alert.priority,
           recipients: alert.recipients,
           status: 'sent',
+          sent_by: user.id,
           sent_at: new Date().toISOString()
         })
         .select('id')
         .single();
 
-      if (alertError) throw alertError;
+      if (alertError) {
+        console.error('Error creating alert:', alertError);
+        throw alertError;
+      }
 
       // Get eligible users based on recipients filter
       let query = supabase

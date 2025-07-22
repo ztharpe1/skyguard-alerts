@@ -41,6 +41,20 @@ export const Settings = () => {
       const result = await alertService.getUserPreferences();
       if (result.success && result.data) {
         setPreferences(result.data);
+      } else {
+        // If no preferences exist, create default ones
+        const defaultPrefs = {
+          emergency_alerts: true,
+          weather_alerts: true,
+          company_alerts: true,
+          system_alerts: true,
+          sms_enabled: true,
+          push_enabled: true,
+          email_enabled: true,
+        };
+        
+        await alertService.updatePreferences(defaultPrefs);
+        setPreferences(defaultPrefs);
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
