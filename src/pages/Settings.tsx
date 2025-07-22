@@ -15,13 +15,22 @@ import {
   Cloud,
   Building2,
   Settings as SettingsIcon,
-  Save
+  Save,
+  Shield,
+  User
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Settings = () => {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
   const [preferences, setPreferences] = useState({
     emergency_alerts: true,
     weather_alerts: true,
@@ -93,6 +102,46 @@ export const Settings = () => {
     }
   };
 
+  const handleRoleUpgrade = async () => {
+    if (verifyCode !== 'sky') {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter the correct verification code.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUpgrading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('user_id', profile?.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Role Updated",
+        description: "You have been upgraded to admin. Please refresh the page.",
+      });
+      setVerifyCode('');
+      
+      // Refresh the page to update the user's session
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update role.",
+        variant: "destructive"
+      });
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -121,6 +170,68 @@ export const Settings = () => {
 
         {/* Phone Number Setup */}
         <PhoneNumberForm />
+
+        {/* Role Management - Only show for employees */}
+        {profile?.role === 'employee' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5" />
+                <span>Role Management</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-3 mb-4">
+                <User className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="font-medium">Current Role: Employee</p>
+                  <p className="text-sm text-muted-foreground">Upgrade to admin to access advanced features</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="verify-code">Enter verification code to upgrade to admin:</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="verify-code"
+                    type="text"
+                    placeholder="Enter code"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleRoleUpgrade}
+                    disabled={!verifyCode || upgrading}
+                  >
+                    {upgrading ? 'Upgrading...' : 'Upgrade'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Current Role Display for Admins */}
+        {profile?.role === 'admin' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5" />
+                <span>Role Management</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-3">
+                <Shield className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="font-medium">Current Role: Administrator</p>
+                  <p className="text-sm text-muted-foreground">You have full access to all features</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Alert Type Preferences */}
         <Card>
