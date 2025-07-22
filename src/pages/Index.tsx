@@ -17,7 +17,7 @@ const Index = () => {
             <img src={skyguardLogo} alt="SkyGuard" className="h-8 w-8" />
             <h1 className="text-xl font-bold">SkyGuard Alert System</h1>
           </div>
-          <Button onClick={() => navigate('/')}>
+          <Button onClick={() => navigate('/auth')}>
             Sign In
           </Button>
         </div>
@@ -32,7 +32,7 @@ const Index = () => {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Professional emergency alert system designed to keep your organization informed and protected during critical situations.
           </p>
-          <Button size="lg" onClick={() => navigate('/')}>
+          <Button size="lg" onClick={() => navigate('/auth')}>
             <Shield className="mr-2 h-5 w-5" />
             Access Dashboard
           </Button>
