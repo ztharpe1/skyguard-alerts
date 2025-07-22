@@ -34,7 +34,7 @@ export const TestSystem = () => {
       
       // Test sending sample alerts
       const testAlert = await alertService.sendAlert({
-        type: 'system',
+        alert_type: 'system',
         title: 'System Test Alert',
         message: 'This is a test alert to verify system functionality.',
         priority: 'low',
@@ -98,7 +98,7 @@ export const TestSystem = () => {
       name: 'Emergency Alert Test',
       description: 'Send test emergency alert to admin users',
       action: () => alertService.sendAlert({
-        type: 'emergency',
+        alert_type: 'emergency',
         title: 'TEST: Emergency System Check',
         message: 'This is a test of the emergency alert system. No action required.',
         priority: 'high',
@@ -109,7 +109,7 @@ export const TestSystem = () => {
       name: 'Weather Alert Test',
       description: 'Send test weather alert to all users',
       action: () => alertService.sendAlert({
-        type: 'weather',
+        alert_type: 'weather',
         title: 'TEST: Weather System Check',
         message: 'This is a test of the weather alert system. No action required.',
         priority: 'medium',
@@ -120,7 +120,7 @@ export const TestSystem = () => {
       name: 'Company Alert Test',
       description: 'Send test company announcement',
       action: () => alertService.sendAlert({
-        type: 'company',
+        alert_type: 'company',
         title: 'TEST: Company System Check',
         message: 'This is a test of the company alert system. No action required.',
         priority: 'low',

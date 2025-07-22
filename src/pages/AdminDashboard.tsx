@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
-import { AlertCard, Alert } from '@/components/AlertCard';
+import { AlertCard } from '@/components/AlertCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAlerts } from '@/hooks/useAlerts';
+import { alertService, AlertRequest } from '@/services/alertService';
 import { 
   Users, 
   Send, 
@@ -19,72 +21,67 @@ import {
   UserCheck
 } from 'lucide-react';
 
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    type: 'emergency',
-    title: 'Severe Weather Warning',
-    message: 'High winds and potential flooding expected.',
-    timestamp: new Date(),
-    priority: 'critical',
-    status: 'delivered',
-    recipients: 234
-  },
-  {
-    id: '2',
-    type: 'company',
-    title: 'Emergency Drill',
-    message: 'Mandatory drill scheduled for tomorrow.',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000),
-    priority: 'high',
-    status: 'sent',
-    recipients: 156
-  }
-];
-
 export const AdminDashboard = () => {
   const { toast } = useToast();
+  const { alerts, loading } = useAlerts();
   const [alertForm, setAlertForm] = useState({
-    type: '',
+    alert_type: '',
     title: '',
     message: '',
     priority: '',
-    recipients: 'all'
+    recipients: 'all' as 'all' | 'emergency' | 'staff' | 'management'
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    alertsSentToday: 0,
+    responseRate: 0
   });
 
-  const stats = [
+  useEffect(() => {
+    // Load stats
+    const loadStats = async () => {
+      const statsData = await alertService.getStats();
+      setStats(statsData);
+    };
+
+    loadStats();
+  }, []);
+
+  const statCards = [
     {
       title: 'Total Users',
-      value: '2,847',
+      value: stats.totalUsers.toString(),
       icon: Users,
       color: 'text-primary',
       change: '+12%'
     },
     {
       title: 'Alerts Sent Today',
-      value: '23',
+      value: stats.alertsSentToday.toString(),
       icon: Send,
       color: 'text-success',
       change: '+5%'
     },
     {
       title: 'Active Users',
-      value: '2,634',
+      value: stats.activeUsers.toString(),
       icon: UserCheck,
       color: 'text-accent',
       change: '+3%'
     },
     {
       title: 'Response Rate',
-      value: '94.2%',
+      value: `${stats.responseRate}%`,
       icon: TrendingUp,
       color: 'text-warning',
       change: '+1.2%'
     }
   ];
 
-  const handleSendAlert = () => {
-    if (!alertForm.type || !alertForm.title || !alertForm.message || !alertForm.priority) {
+  const handleSendAlert = async () => {
+    if (!alertForm.alert_type || !alertForm.title || !alertForm.message || !alertForm.priority) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -93,20 +90,48 @@ export const AdminDashboard = () => {
       return;
     }
 
-    // Simulate sending alert
-    toast({
-      title: "Alert Sent Successfully",
-      description: `${alertForm.type} alert sent to ${alertForm.recipients === 'all' ? 'all users' : alertForm.recipients}.`,
-    });
+    setIsLoading(true);
+    try {
+      const alertData: AlertRequest = {
+        alert_type: alertForm.alert_type as AlertRequest['alert_type'],
+        title: alertForm.title,
+        message: alertForm.message,
+        priority: alertForm.priority as AlertRequest['priority'],
+        recipients: alertForm.recipients
+      };
 
-    // Reset form
-    setAlertForm({
-      type: '',
-      title: '',
-      message: '',
-      priority: '',
-      recipients: 'all'
-    });
+      const result = await alertService.sendAlert(alertData);
+      
+      if (result.success) {
+        toast({
+          title: "Alert Sent Successfully",
+          description: `Alert sent to ${result.recipients} users.`,
+        });
+
+        // Reset form
+        setAlertForm({
+          alert_type: '',
+          title: '',
+          message: '',
+          priority: '',
+          recipients: 'all'
+        });
+
+        // Refresh stats
+        const statsData = await alertService.getStats();
+        setStats(statsData);
+      } else {
+        throw new Error('Failed to send alert');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send alert.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -126,7 +151,7 @@ export const AdminDashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => {
+          {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
               <Card key={stat.title}>
@@ -160,8 +185,8 @@ export const AdminDashboard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-foreground">Alert Type</label>
-                  <Select value={alertForm.type} onValueChange={(value) => 
-                    setAlertForm(prev => ({ ...prev, type: value }))
+                  <Select value={alertForm.alert_type} onValueChange={(value) => 
+                    setAlertForm(prev => ({ ...prev, alert_type: value }))
                   }>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -214,7 +239,7 @@ export const AdminDashboard = () => {
               <div>
                 <label className="text-sm font-medium text-foreground">Recipients</label>
                 <Select value={alertForm.recipients} onValueChange={(value) => 
-                  setAlertForm(prev => ({ ...prev, recipients: value }))
+                  setAlertForm(prev => ({ ...prev, recipients: value as 'all' | 'emergency' | 'staff' | 'management' }))
                 }>
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipients" />
@@ -230,10 +255,11 @@ export const AdminDashboard = () => {
               
               <Button 
                 onClick={handleSendAlert}
+                disabled={isLoading}
                 className="w-full bg-primary hover:bg-primary/90"
               >
                 <Send className="h-4 w-4 mr-2" />
-                Send Alert
+                {isLoading ? 'Sending...' : 'Send Alert'}
               </Button>
             </CardContent>
           </Card>
@@ -281,11 +307,23 @@ export const AdminDashboard = () => {
         {/* Recent Alerts */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-4">Recent Alerts Sent</h2>
-          <div className="space-y-4">
-            {mockAlerts.map((alert) => (
-              <AlertCard key={alert.id} alert={alert} showRecipients />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading alerts...</p>
+            </div>
+          ) : alerts.length > 0 ? (
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <AlertCard key={alert.id} alert={alert} showRecipients />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Send className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">No alerts sent yet</p>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

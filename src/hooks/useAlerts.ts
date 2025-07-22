@@ -1,62 +1,61 @@
 import { useState, useEffect } from 'react';
 import { Alert } from '@/components/AlertCard';
-
-// Mock alerts data for demonstration
-const generateMockAlerts = (): Alert[] => [
-  {
-    id: '1',
-    type: 'emergency',
-    title: 'Severe Weather Warning',
-    message: 'High winds and potential flooding expected in your area. Please take necessary precautions and avoid unnecessary travel.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    priority: 'critical',
-    status: 'delivered'
-  },
-  {
-    id: '2',
-    type: 'company',
-    title: 'Emergency Drill Scheduled',
-    message: 'Mandatory emergency evacuation drill scheduled for tomorrow at 2:00 PM. All staff must participate.',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    priority: 'high',
-    status: 'read'
-  },
-  {
-    id: '3',
-    type: 'weather',
-    title: 'Heat Advisory',
-    message: 'Temperatures expected to reach 95°F today. Stay hydrated and limit outdoor activities.',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    priority: 'medium',
-    status: 'delivered'
-  },
-  {
-    id: '4',
-    type: 'system',
-    title: 'System Maintenance',
-    message: 'Scheduled maintenance will occur tonight from 2-4 AM. Brief service interruptions may occur.',
-    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    priority: 'low',
-    status: 'read'
-  }
-];
+import { alertService } from '@/services/alertService';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useAlerts = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
 
   useEffect(() => {
-    // Simulate loading alerts
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const loadAlerts = async () => {
       setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setAlerts(generateMockAlerts());
-      setLoading(false);
+      try {
+        if (profile?.role === 'admin') {
+          const result = await alertService.getAllAlerts();
+          if (result.success && result.data) {
+            const transformedAlerts = result.data.map((alert: any) => ({
+              id: alert.id,
+              type: alert.alert_type,
+              title: alert.title,
+              message: alert.message,
+              timestamp: new Date(alert.created_at),
+              priority: alert.priority,
+              status: alert.status,
+              recipients: alert.alert_recipients?.length || 0
+            }));
+            setAlerts(transformedAlerts);
+          }
+        } else {
+          const result = await alertService.getUserAlerts();
+          if (result.success && result.data) {
+            const transformedAlerts = result.data.map((alert: any) => ({
+              id: alert.id,
+              type: alert.alert_type,
+              title: alert.title,
+              message: alert.message,
+              timestamp: new Date(alert.created_at),
+              priority: alert.priority,
+              status: alert.alert_recipients?.[0]?.delivery_status || 'sent'
+            }));
+            setAlerts(transformedAlerts);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading alerts:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadAlerts();
-  }, []);
+  }, [user, profile]);
 
   const markAsRead = (alertId: string) => {
     setAlerts(prev => 

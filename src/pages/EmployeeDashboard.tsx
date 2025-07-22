@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
-import { AlertCard, Alert } from '@/components/AlertCard';
+import { AlertCard } from '@/components/AlertCard';
+import { PhoneNumberForm } from '@/components/PhoneNumberForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { useAlerts } from '@/hooks/useAlerts';
+import { alertService } from '@/services/alertService';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Bell, 
   AlertTriangle, 
@@ -15,69 +20,82 @@ import {
   Phone
 } from 'lucide-react';
 
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    type: 'emergency',
-    title: 'Severe Weather Warning',
-    message: 'High winds and potential flooding expected in your area. Please take necessary precautions and avoid unnecessary travel.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    priority: 'critical',
-    status: 'delivered'
-  },
-  {
-    id: '2',
-    type: 'company',
-    title: 'Emergency Drill Scheduled',
-    message: 'Mandatory emergency evacuation drill scheduled for tomorrow at 2:00 PM. All staff must participate.',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    priority: 'high',
-    status: 'read'
-  },
-  {
-    id: '3',
-    type: 'weather',
-    title: 'Heat Advisory',
-    message: 'Temperatures expected to reach 95°F today. Stay hydrated and limit outdoor activities.',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    priority: 'medium',
-    status: 'delivered'
-  }
-];
-
 export const EmployeeDashboard = () => {
+  const { alerts, loading } = useAlerts();
+  const { toast } = useToast();
+  const { profile } = useAuth();
   const [preferences, setPreferences] = useState({
-    emergency: true,
-    weather: true,
-    company: true,
-    sms: true,
-    push: true
+    emergency_alerts: true,
+    weather_alerts: true,
+    company_alerts: true,
+    system_alerts: true,
+    sms_enabled: true,
+    push_enabled: true
   });
+
+  useEffect(() => {
+    // Load user preferences
+    const loadPreferences = async () => {
+      const result = await alertService.getUserPreferences();
+      if (result.success && result.data) {
+        setPreferences({
+          emergency_alerts: result.data.emergency_alerts,
+          weather_alerts: result.data.weather_alerts,
+          company_alerts: result.data.company_alerts,
+          system_alerts: result.data.system_alerts,
+          sms_enabled: result.data.sms_enabled,
+          push_enabled: result.data.push_enabled
+        });
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  const updatePreference = async (key: string, value: boolean) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+    
+    const result = await alertService.updatePreferences({ [key]: value });
+    if (result.success) {
+      toast({
+        title: "Preferences Updated",
+        description: "Your alert preferences have been saved.",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to update preferences.",
+        variant: "destructive"
+      });
+      // Revert the change
+      setPreferences(prev => ({ ...prev, [key]: !value }));
+    }
+  };
 
   const stats = [
     {
       title: 'Total Alerts',
-      value: mockAlerts.length,
+      value: alerts.length,
       icon: Bell,
       color: 'text-primary'
     },
     {
       title: 'Unread',
-      value: mockAlerts.filter(a => a.status !== 'read').length,
+      value: alerts.filter(a => a.status !== 'read').length,
       icon: Clock,
       color: 'text-warning'
     },
     {
       title: 'Critical',
-      value: mockAlerts.filter(a => a.priority === 'critical').length,
+      value: alerts.filter(a => a.priority === 'critical').length,
       icon: AlertTriangle,
       color: 'text-destructive'
     },
     {
-      title: 'Active Status',
-      value: 'Online',
-      icon: CheckCircle,
-      color: 'text-success'
+      title: 'Phone Status',
+      value: profile?.phone_number ? 'Registered' : 'Missing',
+      icon: Phone,
+      color: profile?.phone_number ? 'text-success' : 'text-warning'
     }
   ];
 
@@ -116,6 +134,20 @@ export const EmployeeDashboard = () => {
           })}
         </div>
 
+        {/* Phone Number Form */}
+        {!profile?.phone_number && (
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <h3 className="font-semibold text-warning">Phone Number Required</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              You need to add your phone number to receive SMS alerts.
+            </p>
+            <PhoneNumberForm />
+          </div>
+        )}
+
         {/* Alert Preferences */}
         <Card>
           <CardHeader>
@@ -135,9 +167,9 @@ export const EmployeeDashboard = () => {
                       <span>Emergency Alerts</span>
                     </div>
                     <Switch 
-                      checked={preferences.emergency}
+                      checked={preferences.emergency_alerts}
                       onCheckedChange={(checked) => 
-                        setPreferences(p => ({ ...p, emergency: checked }))
+                        updatePreference('emergency_alerts', checked)
                       }
                     />
                   </div>
@@ -147,9 +179,9 @@ export const EmployeeDashboard = () => {
                       <span>Weather Updates</span>
                     </div>
                     <Switch 
-                      checked={preferences.weather}
+                      checked={preferences.weather_alerts}
                       onCheckedChange={(checked) => 
-                        setPreferences(p => ({ ...p, weather: checked }))
+                        updatePreference('weather_alerts', checked)
                       }
                     />
                   </div>
@@ -159,9 +191,9 @@ export const EmployeeDashboard = () => {
                       <span>Company News</span>
                     </div>
                     <Switch 
-                      checked={preferences.company}
+                      checked={preferences.company_alerts}
                       onCheckedChange={(checked) => 
-                        setPreferences(p => ({ ...p, company: checked }))
+                        updatePreference('company_alerts', checked)
                       }
                     />
                   </div>
@@ -173,18 +205,18 @@ export const EmployeeDashboard = () => {
                   <div className="flex items-center justify-between">
                     <span>SMS Notifications</span>
                     <Switch 
-                      checked={preferences.sms}
+                      checked={preferences.sms_enabled}
                       onCheckedChange={(checked) => 
-                        setPreferences(p => ({ ...p, sms: checked }))
+                        updatePreference('sms_enabled', checked)
                       }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Push Notifications</span>
                     <Switch 
-                      checked={preferences.push}
+                      checked={preferences.push_enabled}
                       onCheckedChange={(checked) => 
-                        setPreferences(p => ({ ...p, push: checked }))
+                        updatePreference('push_enabled', checked)
                       }
                     />
                   </div>
@@ -197,11 +229,23 @@ export const EmployeeDashboard = () => {
         {/* Recent Alerts */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-4">Recent Alerts</h2>
-          <div className="space-y-4">
-            {mockAlerts.map((alert) => (
-              <AlertCard key={alert.id} alert={alert} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <Clock className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading alerts...</p>
+            </div>
+          ) : alerts.length > 0 ? (
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <AlertCard key={alert.id} alert={alert} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">No alerts yet</p>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

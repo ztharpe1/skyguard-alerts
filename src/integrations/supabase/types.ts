@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_recipients: {
+        Row: {
+          alert_id: string
+          created_at: string
+          delivered_at: string | null
+          delivery_method: string
+          delivery_status: string
+          id: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_method: string
+          delivery_status?: string
+          id?: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string
+          delivery_status?: string
+          id?: string
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_recipients_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          recipients: string
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          priority: string
+          recipients: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          recipients?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -41,6 +121,48 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          company_alerts: boolean
+          created_at: string
+          email_enabled: boolean
+          emergency_alerts: boolean
+          id: string
+          push_enabled: boolean
+          sms_enabled: boolean
+          system_alerts: boolean
+          updated_at: string
+          user_id: string
+          weather_alerts: boolean
+        }
+        Insert: {
+          company_alerts?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          emergency_alerts?: boolean
+          id?: string
+          push_enabled?: boolean
+          sms_enabled?: boolean
+          system_alerts?: boolean
+          updated_at?: string
+          user_id: string
+          weather_alerts?: boolean
+        }
+        Update: {
+          company_alerts?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          emergency_alerts?: boolean
+          id?: string
+          push_enabled?: boolean
+          sms_enabled?: boolean
+          system_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+          weather_alerts?: boolean
         }
         Relationships: []
       }
