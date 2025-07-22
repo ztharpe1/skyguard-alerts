@@ -41,10 +41,10 @@ const WeatherWidget = () => {
       // In production, you would need to add your OpenWeatherMap API key
       const mockWeatherData: WeatherData = {
         location: 'Current Location',
-        temperature: Math.round(Math.random() * 20 + 10), // Random temp between 10-30°C
+        temperature: Math.round(Math.random() * 36 + 50), // Random temp between 50-86°F
         description: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
         humidity: Math.round(Math.random() * 40 + 40), // Random humidity 40-80%
-        windSpeed: Math.round(Math.random() * 10 + 5), // Random wind 5-15 km/h
+        windSpeed: Math.round(Math.random() * 10 + 5), // Random wind 5-15 mph
         icon: ['01d', '02d', '03d', '10d'][Math.floor(Math.random() * 4)]
       };
       
@@ -108,7 +108,7 @@ const WeatherWidget = () => {
               <div className="flex items-center justify-center mb-2">
                 {getWeatherIcon(weather.icon)}
               </div>
-              <div className="text-3xl font-bold">{weather.temperature}°C</div>
+              <div className="text-3xl font-bold">{weather.temperature}°F</div>
               <div className="text-muted-foreground capitalize">{weather.description}</div>
               <div className="text-sm text-muted-foreground">{weather.location}</div>
             </div>
@@ -124,7 +124,7 @@ const WeatherWidget = () => {
               <div className="flex items-center gap-2">
                 <Wind className="h-4 w-4 text-gray-500" />
                 <div>
-                  <div className="text-sm font-medium">{weather.windSpeed} km/h</div>
+                  <div className="text-sm font-medium">{weather.windSpeed} mph</div>
                   <div className="text-xs text-muted-foreground">Wind</div>
                 </div>
               </div>
