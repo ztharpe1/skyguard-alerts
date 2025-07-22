@@ -46,6 +46,7 @@ const WeatherAlertsManager = () => {
     temperature: <Thermometer className="h-4 w-4" />,
     wind: <Wind className="h-4 w-4" />,
     humidity: <Droplets className="h-4 w-4" />,
+    air_quality: <CloudRain className="h-4 w-4" />,
     storm: <CloudRain className="h-4 w-4" />
   };
 
@@ -280,6 +281,7 @@ const WeatherAlertsManager = () => {
                       <SelectItem value="temperature">Temperature</SelectItem>
                       <SelectItem value="wind">Wind Speed</SelectItem>
                       <SelectItem value="humidity">Humidity</SelectItem>
+                      <SelectItem value="air_quality">Air Quality Index</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -301,7 +303,7 @@ const WeatherAlertsManager = () => {
 
                   <div>
                     <Label htmlFor="threshold_value">
-                      Threshold ({formData.alert_type === 'temperature' ? '°F' : formData.alert_type === 'wind' ? 'mph' : '%'}) *
+                      Threshold ({formData.alert_type === 'temperature' ? '°F' : formData.alert_type === 'wind' ? 'mph' : formData.alert_type === 'air_quality' ? 'AQI' : '%'}) *
                     </Label>
                     <Input
                       id="threshold_value"
@@ -392,7 +394,8 @@ const WeatherAlertsManager = () => {
                       <div className="text-sm">
                         {alert.condition_operator.replace('_', ' ')} {alert.threshold_value}
                         {alert.alert_type === 'temperature' ? '°F' : 
-                         alert.alert_type === 'wind' ? ' mph' : '%'}
+                         alert.alert_type === 'wind' ? ' mph' : 
+                         alert.alert_type === 'air_quality' ? ' AQI' : '%'}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -1,0 +1,2 @@
+-- Add air_quality as a valid alert type to the weather_alerts table
+-- This enables monitoring of air quality index thresholds
