@@ -46,11 +46,19 @@ export const TestDashboard = () => {
       const systemStatus = await alertService.testSystem();
       
       // Test 3: Phone number setup
-      const phoneTest = !!profile?.phone_number;
+      const phoneTest = !!profile?.phone_number && profile.phone_number.trim() !== '';
       
-      // Test 4: User preferences
-      const prefsResult = await alertService.getUserPreferences();
-      const prefsTest = prefsResult.success && !!prefsResult.data;
+      // Test 4: User preferences - only test if we have authentication
+      let prefsTest = false;
+      if (authTest) {
+        try {
+          const prefsResult = await alertService.getUserPreferences();
+          prefsTest = prefsResult.success && !!prefsResult.data;
+        } catch (error) {
+          console.error('Error testing preferences:', error);
+          prefsTest = false;
+        }
+      }
       
       setTestResults({
         auth: authTest,
@@ -63,10 +71,11 @@ export const TestDashboard = () => {
 
       toast({
         title: "Basic Tests Complete",
-        description: "System connectivity tests finished",
+        description: `Authentication: ${authTest ? 'Pass' : 'Fail'}, Database: ${systemStatus.database ? 'Pass' : 'Fail'}, Phone: ${phoneTest ? 'Pass' : 'Fail'}`,
       });
 
     } catch (error) {
+      console.error('Test error:', error);
       toast({
         title: "Test Error",
         description: "Some tests failed to complete",
@@ -82,6 +91,16 @@ export const TestDashboard = () => {
       toast({
         title: "Phone Number Required",
         description: "Please add your phone number first to test alerts",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if user is admin (required to send alerts)
+    if (profile?.role !== 'admin') {
+      toast({
+        title: "Admin Required",
+        description: "Only admin users can send alerts. Please login as an admin to test alert sending.",
         variant: "destructive"
       });
       return;
@@ -113,6 +132,13 @@ export const TestDashboard = () => {
       });
 
     } catch (error: any) {
+      console.error('Alert test error:', error);
+      setTestResults(prev => ({
+        ...prev,
+        alertSending: false,
+        alertReceiving: false
+      }));
+      
       toast({
         title: "Alert Test Failed",
         description: error.message || "Failed to send test alert",
@@ -220,9 +246,10 @@ export const TestDashboard = () => {
           
           <Button
             onClick={testAlertSystem}
-            disabled={testing || !profile?.phone_number}
+            disabled={testing || !profile?.phone_number || profile?.role !== 'admin'}
           >
             {testing ? 'Sending...' : 'Test Alert System'}
+            {profile?.role !== 'admin' && ' (Admin Only)'}
           </Button>
         </div>
 
