@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Bell, Users, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import skyguardLogo from '@/assets/skyguard-logo.png';
+import WeatherWidget from '@/components/WeatherWidget';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -38,6 +39,11 @@ const Index = () => {
               Access Dashboard
             </Button>
           </div>
+        </div>
+
+        {/* Weather Widget */}
+        <div className="flex justify-center mb-16">
+          <WeatherWidget />
         </div>
 
         {/* Features Grid */}
