@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { validateAlertMessage, validateAlertTitle, createRateLimiter } from '@/lib/security';
 
 export interface AlertRequest {
   alert_type: 'emergency' | 'weather' | 'company' | 'system';

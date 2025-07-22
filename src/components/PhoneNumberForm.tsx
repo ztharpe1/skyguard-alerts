@@ -6,18 +6,29 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Phone, Save } from 'lucide-react';
+import { validatePhoneNumber, formatPhoneNumber } from '@/lib/security';
 
 export const PhoneNumberForm = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [phone, setPhone] = useState(profile?.phone_number || '');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    // Validate phone number
+    const validation = validatePhoneNumber(phone);
+    if (!validation.isValid) {
+      setError(validation.error || 'Invalid phone number');
+      return;
+    }
+
     setIsLoading(true);
+    setError('');
+    
     try {
       const { error } = await supabase
         .from('profiles')
@@ -28,7 +39,7 @@ export const PhoneNumberForm = () => {
 
       toast({
         title: "Phone Number Updated",
-        description: "Your phone number has been saved successfully.",
+        description: "Your phone number has been saved successfully for SMS alerts.",
       });
     } catch (error: any) {
       toast({
@@ -41,24 +52,10 @@ export const PhoneNumberForm = () => {
     }
   };
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digits
-    const cleaned = value.replace(/\D/g, '');
-    
-    // Format as (XXX) XXX-XXXX
-    if (cleaned.length >= 10) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-    } else if (cleaned.length >= 6) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-    } else if (cleaned.length >= 3) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-    }
-    return cleaned;
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
     setPhone(formatted);
+    setError(''); // Clear error when user types
   };
 
   return (
@@ -82,8 +79,9 @@ export const PhoneNumberForm = () => {
               value={phone}
               onChange={handlePhoneChange}
               maxLength={14}
-              className="mt-1"
+              className={`mt-1 ${error ? 'border-destructive' : ''}`}
             />
+            {error && <p className="text-sm text-destructive mt-1">{error}</p>}
             <p className="text-xs text-muted-foreground mt-1">
               Enter your phone number to receive SMS alerts
             </p>
