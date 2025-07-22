@@ -23,17 +23,36 @@ export interface SystemStatus {
   database: boolean;
 }
 
+// Rate limiter for alerts (max 5 alerts per minute for admins)
+const alertRateLimiter = createRateLimiter(5, 60000);
+
 // Real alert service using Supabase
 export const alertService = {
   // Send alert to users
   sendAlert: async (alert: AlertRequest): Promise<{ success: boolean; recipients: number; alertId?: string }> => {
     try {
-      // Create the alert record
+      // Rate limiting check
+      if (!alertRateLimiter()) {
+        throw new Error('Rate limit exceeded. Please wait before sending another alert.');
+      }
+
+      // Validate and sanitize inputs
+      const titleValidation = validateAlertTitle(alert.title);
+      if (!titleValidation.isValid) {
+        throw new Error(titleValidation.error);
+      }
+
+      const messageValidation = validateAlertMessage(alert.message);
+      if (!messageValidation.isValid) {
+        throw new Error(messageValidation.error);
+      }
+
+      // Create the alert record with sanitized data
       const { data: alertData, error: alertError } = await supabase
         .from('alerts')
         .insert({
-          title: alert.title,
-          message: alert.message,
+          title: titleValidation.sanitized,
+          message: messageValidation.sanitized,
           alert_type: alert.alert_type,
           priority: alert.priority,
           recipients: alert.recipients,
@@ -113,10 +132,7 @@ export const alertService = {
       };
     } catch (error: any) {
       console.error('Error sending alert:', error);
-      return {
-        success: false,
-        recipients: 0
-      };
+      throw error; // Re-throw to let the calling code handle the error
     }
   },
 

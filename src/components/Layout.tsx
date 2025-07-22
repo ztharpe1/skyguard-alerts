@@ -73,6 +73,12 @@ export const Layout = ({ children }: LayoutProps) => {
       roles: ['admin'] 
     },
     { 
+      path: '/test-dashboard', 
+      label: 'Test System', 
+      icon: Settings, 
+      roles: ['employee', 'admin'] 
+    },
+    { 
       path: '/settings', 
       label: 'Settings', 
       icon: Settings, 
