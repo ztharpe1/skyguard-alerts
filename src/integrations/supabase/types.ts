@@ -22,6 +22,8 @@ export type Database = {
           delivery_method: string
           delivery_status: string
           id: string
+          read_at: string | null
+          read_status: string | null
           sent_at: string | null
           user_id: string
         }
@@ -32,6 +34,8 @@ export type Database = {
           delivery_method: string
           delivery_status?: string
           id?: string
+          read_at?: string | null
+          read_status?: string | null
           sent_at?: string | null
           user_id: string
         }
@@ -42,6 +46,8 @@ export type Database = {
           delivery_method?: string
           delivery_status?: string
           id?: string
+          read_at?: string | null
+          read_status?: string | null
           sent_at?: string | null
           user_id?: string
         }

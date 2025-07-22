@@ -287,6 +287,49 @@ export const alertService = {
     }
   },
 
+  // Mark alert as read
+  markAlertAsRead: async (alertId: string): Promise<{ success: boolean }> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('alert_recipients')
+        .update({ 
+          read_status: 'read',
+          read_at: new Date().toISOString()
+        })
+        .eq('alert_id', alertId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error marking alert as read:', error);
+      return { success: false };
+    }
+  },
+
+  // Get read receipts for an alert (admin only)
+  getAlertReadReceipts: async (alertId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('alert_recipients')
+        .select(`
+          *,
+          profiles!inner(username, role)
+        `)
+        .eq('alert_id', alertId)
+        .order('read_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error getting read receipts:', error);
+      return { success: false, data: [] };
+    }
+  },
+
   // Get all alerts for admin
   getAllAlerts: async () => {
     try {

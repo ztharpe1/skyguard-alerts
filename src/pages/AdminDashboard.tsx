@@ -342,7 +342,7 @@ export const AdminDashboard = () => {
           ) : alerts.length > 0 ? (
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <AlertCard key={alert.id} alert={alert} showRecipients />
+                <AlertCard key={alert.id} alert={alert} showRecipients showReadReceipts />
               ))}
             </div>
           ) : (

@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Cloud, Building2, Info, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ReadReceiptsDialog } from '@/components/ReadReceiptsDialog';
+import { alertService } from '@/services/alertService';
+import { useAuth } from '@/hooks/useAuth';
+import { AlertTriangle, Cloud, Building2, Info, CheckCircle, Eye, CheckCircle2 } from 'lucide-react';
 
 export interface Alert {
   id: string;
@@ -17,6 +21,7 @@ export interface Alert {
 interface AlertCardProps {
   alert: Alert;
   showRecipients?: boolean;
+  showReadReceipts?: boolean;
 }
 
 const getAlertIcon = (type: Alert['type']) => {
@@ -56,8 +61,16 @@ const getStatusColor = (status: Alert['status']) => {
   }
 };
 
-export const AlertCard = ({ alert, showRecipients = false }: AlertCardProps) => {
+export const AlertCard = ({ alert, showRecipients = false, showReadReceipts = false }: AlertCardProps) => {
   const Icon = getAlertIcon(alert.type);
+  const { profile } = useAuth();
+
+  // Auto-mark as read for employees when they view the alert
+  useEffect(() => {
+    if (profile?.role === 'employee' && alert.status !== 'read') {
+      alertService.markAlertAsRead(alert.id);
+    }
+  }, [alert.id, alert.status, profile?.role]);
 
   return (
     <Card className="w-full">
@@ -96,12 +109,32 @@ export const AlertCard = ({ alert, showRecipients = false }: AlertCardProps) => 
         <p className="text-foreground mb-3">{alert.message}</p>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span className="capitalize">{alert.type} Alert</span>
-          {showRecipients && alert.recipients && (
-            <div className="flex items-center space-x-1">
-              <CheckCircle className="h-4 w-4" />
-              <span>{alert.recipients} recipients</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-2">
+            {showRecipients && alert.recipients && (
+              <div className="flex items-center space-x-1">
+                <CheckCircle className="h-4 w-4" />
+                <span>{alert.recipients} recipients</span>
+              </div>
+            )}
+            
+            {/* Read Receipt Button for Admins */}
+            {showReadReceipts && profile?.role === 'admin' && (
+              <ReadReceiptsDialog alertId={alert.id} alertTitle={alert.title}>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                  <Eye className="h-3 w-3 mr-1" />
+                  View Receipts
+                </Button>
+              </ReadReceiptsDialog>
+            )}
+
+            {/* Read Status for Employees */}
+            {profile?.role === 'employee' && alert.status === 'read' && (
+              <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/20">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Read
+              </Badge>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
