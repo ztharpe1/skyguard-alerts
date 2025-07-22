@@ -44,8 +44,14 @@ export const AdminDashboard = () => {
   useEffect(() => {
     // Load stats
     const loadStats = async () => {
-      const statsData = await alertService.getStats();
-      setStats(statsData);
+      try {
+        console.log('Loading admin dashboard stats...');
+        const statsData = await alertService.getStats();
+        console.log('Stats loaded:', statsData);
+        setStats(statsData);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
     };
 
     loadStats();
@@ -83,7 +89,11 @@ export const AdminDashboard = () => {
   ];
 
   const handleSendAlert = async () => {
+    console.log('Send alert button clicked');
+    console.log('Alert form state:', alertForm);
+    
     if (!alertForm.alert_type || !alertForm.title || !alertForm.message || !alertForm.priority) {
+      console.log('Form validation failed - missing fields');
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
